@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <title>Project</title>
+
+    <script id="vertex-shader" type="x-shader/x-vertex">
+      attribute vec4 vPosition;
+      attribute vec4 vColor;
+      attribute vec2 vTexCoord;
+      varying vec4 fColor;
+      varying vec2 fTexCoord;
+      uniform mat4 modelViewMatrix;
+      uniform mat4 projectionMatrix;
+
+      void main() {
+        gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+        fColor = vColor;
+        fTexCoord = vTexCoord;
+      }
+    </script>
+
+    <script id="fragment-shader" type="x-shader/x-fragment">
+      precision mediump float;
+      varying vec4 fColor;
+      varying vec2 fTexCoord;
+      uniform sampler2D uTexture;
+      void main() {
+        //gl_FragColor = fColor * texture2D(uTexture, fTexCoord);
+        gl_FragColor = fColor;
+      }
+    </script>
+
+    <script type="text/javascript" src="Common/webgl-utils.js"></script>
+    <script type="text/javascript" src="Common/initShaders.js"></script>
+    <script type="text/javascript" src="Common/MV.js"></script>
+    <script type="text/javascript" src="script.js"></script>
+  </head>
+
+  <body id="body">
+    <div style="background-image: url(background.png); background-repeat: no-repeat">
+      <canvas id="gl-canvas" width="1600" height="900">
+        Oops ... your browser doesn't support the HTML5 canvas element
+      </canvas>
+    </div>
+    <div>
+      <!-- <span>어떤 운동의 번호를 키보드로 누르면 해당 동작을 합니다.</span> -->
+    </div>
+    <div>
+      <button id="Button0" type="button">다리 운동(1)</button>
+      <button id="Button1" type="button">팔 운동(2)</button>
+      <button id="Button2" type="button">목 운동(3)</button>
+      <button id="Button3" type="button">가슴 운동(4)</button>
+      <button id="Button4" type="button">옆구리 운동(5)</button>
+      <button id="Button5" type="button">등배 운동(6)</button>
+      <button id="Button6" type="button">몸통 운동(7)</button>
+      <button id="Button7" type="button">팔다리 운동1(8)</button>
+      <button id="Button8" type="button">온몸 운동(9)</button>
+      <button id="Button9" type="button">뜀뛰기 운동(0)</button>
+      <button id="Button10" type="button">팔다리 운동2(-)</button>
+      <button id="Button11" type="button">숨쉬기 운동(=)</button>
+    </div>
+  </body>
+</html>
