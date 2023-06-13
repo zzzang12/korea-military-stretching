@@ -21,12 +21,9 @@ let vertices = [
 ];
 let vertexBuffer;
 let vertexLoc;
-let colors = [];
+let colorsArray = [];
 let colorBuffer;
 let colorLoc;
-let texturesArray = [];
-let textureBuffer;
-let textureLoc;
 
 const TORSO_ID = 0;
 const HEAD_ID = 1;
@@ -97,7 +94,6 @@ let vertexColors = [
 ];
 
 let step = 1;
-let stretching = Array.from(Array(8), () => new Array(8));
 
 window.onload = function init() {
   canvas = document.getElementById('gl-canvas');
@@ -130,17 +126,10 @@ window.onload = function init() {
 
   colorBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(colorsArray), gl.STATIC_DRAW);
   colorLoc = gl.getAttribLocation(program, 'vColor');
   gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(colorLoc);
-
-  textureBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(texturesArray), gl.STATIC_DRAW);
-  textureLoc = gl.getAttribLocation(program, 'vTexCoord');
-  gl.vertexAttribPointer(textureLoc, 2, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(textureLoc);
 
   document.getElementById('body').addEventListener('keydown', (e) => {
     if (e.key === '1') {
@@ -200,7 +189,6 @@ window.onload = function init() {
         }
       }
       if (step == 6) {
-        console.log(theta[LEFT_UPPER_ARM_ID].z);
         theta[LEFT_UPPER_ARM_ID].z -= 1;
         theta[RIGHT_UPPER_ARM_ID].z += 1;
         initNodes(LEFT_UPPER_ARM_ID);
@@ -250,7 +238,6 @@ window.onload = function init() {
     }
     if (e.key === '3') {
       if (step == 1) {
-        console.log(theta[HEAD_ID].z);
         theta[HEAD_ID].z -= 2.5;
         initNodes(HEAD_ID);
         theta[LEFT_UPPER_ARM_ID].z += 1;
@@ -266,7 +253,6 @@ window.onload = function init() {
         }
       }
       if (step == 2) {
-        console.log(theta[HEAD_ID].z);
         theta[HEAD_ID].z -= 2.5;
         initNodes(HEAD_ID);
         if (theta[HEAD_ID].z <= -90) {
@@ -288,7 +274,6 @@ window.onload = function init() {
         }
       }
       if (step == 5) {
-        console.log('theta[HEAD_ID].y:', theta[HEAD_ID].y);
         theta[HEAD_ID].y -= 5;
         initNodes(HEAD_ID);
         if (theta[HEAD_ID].y <= -140) {
@@ -296,7 +281,6 @@ window.onload = function init() {
         }
       }
       if (step == 6) {
-        console.log('theta[HEAD_ID].y:', theta[HEAD_ID].y);
         theta[HEAD_ID].y -= 5;
         initNodes(HEAD_ID);
         if (theta[HEAD_ID].y <= -230) {
@@ -304,7 +288,6 @@ window.onload = function init() {
         }
       }
       if (step == 7) {
-        console.log('theta[HEAD_ID].y:', theta[HEAD_ID].y);
         theta[HEAD_ID].y -= 5;
         initNodes(HEAD_ID);
         if (theta[HEAD_ID].y <= -320) {
@@ -312,7 +295,6 @@ window.onload = function init() {
         }
       }
       if (step == 8) {
-        console.log('theta[HEAD_ID].y:', theta[HEAD_ID].y);
         theta[HEAD_ID].y -= 5;
         theta[HEAD_ID].z -= 2.7;
         initNodes(HEAD_ID);
@@ -637,7 +619,6 @@ window.onload = function init() {
         }
       }
       if (step == 5) {
-        console.log(theta[LEFT_UPPER_ARM_ID].z);
         theta[LEFT_UPPER_ARM_ID].z += 7;
         theta[RIGHT_UPPER_ARM_ID].z -= 7;
         initNodes(LEFT_UPPER_ARM_ID);
@@ -647,7 +628,6 @@ window.onload = function init() {
         }
       }
       if (step == 6) {
-        console.log(theta[LEFT_UPPER_ARM_ID].z);
         theta[LEFT_UPPER_ARM_ID].z -= 7;
         theta[RIGHT_UPPER_ARM_ID].z += 7;
         initNodes(LEFT_UPPER_ARM_ID);
@@ -668,7 +648,6 @@ window.onload = function init() {
         }
       }
       if (step == 7) {
-        console.log(theta[LEFT_UPPER_ARM_ID].z);
         theta[LEFT_UPPER_ARM_ID].z += 7;
         theta[RIGHT_UPPER_ARM_ID].z -= 7;
         initNodes(LEFT_UPPER_ARM_ID);
@@ -689,7 +668,6 @@ window.onload = function init() {
         }
       }
       if (step == 8) {
-        console.log(theta[LEFT_UPPER_ARM_ID].z);
         theta[LEFT_UPPER_ARM_ID].z -= 7;
         theta[RIGHT_UPPER_ARM_ID].z += 7;
         initNodes(LEFT_UPPER_ARM_ID);
@@ -700,19 +678,6 @@ window.onload = function init() {
       }
     }
   });
-
-  document.getElementById('Button0').addEventListener('click', () => {});
-  document.getElementById('Button1').addEventListener('click', () => {});
-  document.getElementById('Button2').addEventListener('click', () => {});
-  document.getElementById('Button3').addEventListener('click', () => {});
-  document.getElementById('Button4').addEventListener('click', () => {});
-  document.getElementById('Button5').addEventListener('click', () => {});
-  document.getElementById('Button6').addEventListener('click', () => {});
-  document.getElementById('Button7').addEventListener('click', () => {});
-  document.getElementById('Button8').addEventListener('click', () => {});
-  document.getElementById('Button9').addEventListener('click', () => {});
-  document.getElementById('Button10').addEventListener('click', () => {});
-  document.getElementById('Button11').addEventListener('click', () => {});
 
   initAll();
 
@@ -944,50 +909,36 @@ function foot() {
   for (var i = 0; i < 6; i++) gl.drawArrays(gl.TRIANGLE_FAN, 4 * i, 4);
 }
 
-function quad(a, b, c, d) {
+function pushPointsArray(a, b, c, d) {
   pointsArray.push(vertices[a]);
   pointsArray.push(vertices[b]);
   pointsArray.push(vertices[c]);
   pointsArray.push(vertices[d]);
 }
 
-function cube() {
-  quad(0, 1, 2, 3);
-  colors.push(vertexColors[0]);
-  colors.push(vertexColors[1]);
-  colors.push(vertexColors[2]);
-  colors.push(vertexColors[3]);
-  quad(1, 2, 6, 5);
-  colors.push(vertexColors[0]);
-  colors.push(vertexColors[1]);
-  colors.push(vertexColors[2]);
-  colors.push(vertexColors[3]);
-  quad(0, 3, 7, 4);
-  colors.push(vertexColors[0]);
-  colors.push(vertexColors[1]);
-  colors.push(vertexColors[2]);
-  colors.push(vertexColors[3]);
-  quad(0, 1, 5, 4);
-  colors.push(vertexColors[0]);
-  colors.push(vertexColors[1]);
-  colors.push(vertexColors[2]);
-  colors.push(vertexColors[3]);
-  quad(2, 3, 7, 6);
-  colors.push(vertexColors[0]);
-  colors.push(vertexColors[1]);
-  colors.push(vertexColors[2]);
-  colors.push(vertexColors[3]);
-  quad(4, 5, 6, 7);
-  colors.push(vertexColors[0]);
-  colors.push(vertexColors[1]);
-  colors.push(vertexColors[2]);
-  colors.push(vertexColors[3]);
+function pushColorsArray(a, b, c, d) {
+  colorsArray.push(vertexColors[a]);
+  colorsArray.push(vertexColors[b]);
+  colorsArray.push(vertexColors[c]);
+  colorsArray.push(vertexColors[d]);
 }
 
-const sleep = (time) => {
-  let start = Date.now();
-  let now = start;
-  while (now - start < time) {
-    now = Date.now();
-  }
-};
+function cube() {
+  pushPointsArray(0, 1, 2, 3);
+  pushColorsArray(0, 1, 2, 3);
+
+  pushPointsArray(1, 2, 6, 5);
+  pushColorsArray(0, 1, 2, 3);
+
+  pushPointsArray(0, 3, 7, 4);
+  pushColorsArray(0, 1, 2, 3);
+
+  pushPointsArray(0, 1, 5, 4);
+  pushColorsArray(0, 1, 2, 3);
+
+  pushPointsArray(2, 3, 7, 6);
+  pushColorsArray(0, 1, 2, 3);
+
+  pushPointsArray(4, 5, 6, 7);
+  pushColorsArray(0, 1, 2, 3);
+}

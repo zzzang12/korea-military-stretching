@@ -7,26 +7,26 @@
     <script id="vertex-shader" type="x-shader/x-vertex">
       attribute vec4 vPosition;
       attribute vec4 vColor;
-      attribute vec2 vTexCoord;
+      attribute vec2 vTextureCoord;
       varying vec4 fColor;
-      varying vec2 fTexCoord;
+      varying vec2 fTextureCoord;
       uniform mat4 modelViewMatrix;
       uniform mat4 projectionMatrix;
 
       void main() {
         gl_Position = projectionMatrix * modelViewMatrix * vPosition;
         fColor = vColor;
-        fTexCoord = vTexCoord;
+        fTextureCoord = vTextureCoord;
       }
     </script>
 
     <script id="fragment-shader" type="x-shader/x-fragment">
       precision mediump float;
       varying vec4 fColor;
-      varying vec2 fTexCoord;
+      varying vec2 fTextureCoord;
       uniform sampler2D uTexture;
       void main() {
-        //gl_FragColor = fColor * texture2D(uTexture, fTexCoord);
+        //gl_FragColor = fColor * texture2D(uTexture, fTextureCoord);
         gl_FragColor = fColor;
       }
     </script>
