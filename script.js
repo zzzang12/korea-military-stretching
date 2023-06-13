@@ -1,7 +1,7 @@
 'use strict';
 
 let gl;
-let program;
+let program = [];
 let canvas;
 
 let modelViewMatrix;
@@ -19,11 +19,11 @@ let vertices = [
   vec4(0.5, 0.5, -0.5, 1.0),
   vec4(0.5, -0.5, -0.5, 1.0),
 ];
-let vertexBuffer;
-let vertexLoc;
+let vertexBuffer = [];
+let vertexLoc = [];
 let colorsArray = [];
-let colorBuffer;
-let colorLoc;
+let colorBuffer = [];
+let colorLoc = [];
 let pointsArray = [];
 let vertexColors = [
   vec4(0.29, 0.33, 0.2, 1.0), // Brown
@@ -102,9 +102,6 @@ let aspect;
 let at = vec3(0.0, 0.0, 0.0);
 let up = vec3(0.0, 1.0, 0.0);
 let eye = vec3(0.0, 0.0, radius);
-let eyeX = 0;
-let eyeY = 0;
-
 window.onload = function init() {
   canvas = document.getElementById('gl-canvas');
 
@@ -117,932 +114,40 @@ window.onload = function init() {
   aspect = canvas.width / canvas.height;
   gl.enable(gl.DEPTH_TEST);
 
-  program = initShaders(gl, 'vertex-shader', 'fragment-shader');
-  gl.useProgram(program);
+  for (var i = 0; i < 5; i++) {
+    cube();
+    program[i] = initShaders(gl, 'vertex-shader', 'fragment-shader');
 
-  modelViewMatrix = lookAt(eye, at, up);
-  projectionMatrix = perspective(fovy, aspect, near, far);
-  instanceMatrix = mat4();
-  gl.uniformMatrix4fv(gl.getUniformLocation(program, 'modelViewMatrix'), false, flatten(modelViewMatrix));
-  gl.uniformMatrix4fv(gl.getUniformLocation(program, 'projectionMatrix'), false, flatten(projectionMatrix));
-  modelViewMatrixLoc = gl.getUniformLocation(program, 'modelViewMatrix');
+    vertexBuffer[i] = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer[i]);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW);
+    vertexLoc[i] = gl.getAttribLocation(program[i], 'vPosition');
+    gl.vertexAttribPointer(vertexLoc[i], 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vertexLoc[i]);
 
-  cube();
+    colorBuffer[i] = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer[i]);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(colorsArray), gl.STATIC_DRAW);
+    colorLoc[i] = gl.getAttribLocation(program[i], 'vColor');
+    gl.vertexAttribPointer(colorLoc[i], 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(colorLoc[i]);
 
-  vertexBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW);
-  vertexLoc = gl.getAttribLocation(program, 'vPosition');
-  gl.vertexAttribPointer(vertexLoc, 4, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(vertexLoc);
-
-  colorBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(colorsArray), gl.STATIC_DRAW);
-  colorLoc = gl.getAttribLocation(program, 'vColor');
-  gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(colorLoc);
-
-  document.getElementById('body').addEventListener('keydown', (e) => {
-    if (e.key === '1') {
-      if (step == 1) {
-        theta[LEFT_UPPER_ARM_ID].x -= 5;
-        theta[RIGHT_UPPER_ARM_ID].x -= 5;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].x <= 85) {
-          step = 2;
-        }
-      }
-      if (step == 2) {
-        theta[LEFT_UPPER_ARM_ID].x += 5;
-        theta[RIGHT_UPPER_ARM_ID].x += 5;
-        theta[LEFT_UPPER_ARM_ID].z += 2.5;
-        theta[RIGHT_UPPER_ARM_ID].z -= 2.5;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-
-        theta[LEFT_UPPER_LEG_ID].z += 0.5;
-        theta[RIGHT_UPPER_LEG_ID].z -= 0.5;
-        initNodes(LEFT_UPPER_LEG_ID);
-        initNodes(RIGHT_UPPER_LEG_ID);
-        theta[LEFT_LOWER_LEG_ID].z -= 1;
-        theta[RIGHT_LOWER_LEG_ID].z += 1;
-        initNodes(LEFT_LOWER_LEG_ID);
-        initNodes(RIGHT_LOWER_LEG_ID);
-        theta[Y_COORDINATE] -= 1;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        if (theta[LEFT_UPPER_ARM_ID].x >= 180) {
-          step = 2.5;
-        }
-      }
-      if (step == 2.5) {
-        theta[LEFT_UPPER_ARM_ID].x += 5;
-        theta[RIGHT_UPPER_ARM_ID].x += 5;
-        theta[LEFT_UPPER_ARM_ID].z += 2.5;
-        theta[RIGHT_UPPER_ARM_ID].z -= 2.5;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-
-        theta[LEFT_UPPER_LEG_ID].z -= 0.5;
-        theta[RIGHT_UPPER_LEG_ID].z += 0.5;
-        initNodes(LEFT_UPPER_LEG_ID);
-        initNodes(RIGHT_UPPER_LEG_ID);
-        theta[LEFT_LOWER_LEG_ID].z += 1;
-        theta[RIGHT_LOWER_LEG_ID].z -= 1;
-        initNodes(LEFT_LOWER_LEG_ID);
-        initNodes(RIGHT_LOWER_LEG_ID);
-        theta[Y_COORDINATE] += 1;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        if (theta[LEFT_UPPER_ARM_ID].x >= 270) {
-          step = 3;
-        }
-      }
-      if (step == 3) {
-        theta[LEFT_UPPER_ARM_ID].x -= 5;
-        theta[RIGHT_UPPER_ARM_ID].x -= 5;
-        theta[LEFT_UPPER_ARM_ID].z -= 2.5;
-        theta[RIGHT_UPPER_ARM_ID].z += 2.5;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-
-        theta[LEFT_UPPER_LEG_ID].z += 0.5;
-        theta[RIGHT_UPPER_LEG_ID].z -= 0.5;
-        initNodes(LEFT_UPPER_LEG_ID);
-        initNodes(RIGHT_UPPER_LEG_ID);
-        theta[LEFT_LOWER_LEG_ID].z -= 1;
-        theta[RIGHT_LOWER_LEG_ID].z += 1;
-        initNodes(LEFT_LOWER_LEG_ID);
-        initNodes(RIGHT_LOWER_LEG_ID);
-        theta[Y_COORDINATE] -= 1;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        if (theta[LEFT_UPPER_ARM_ID].x <= 180) {
-          step = 3.5;
-        }
-      }
-      if (step == 3.5) {
-        theta[LEFT_UPPER_ARM_ID].x -= 5;
-        theta[RIGHT_UPPER_ARM_ID].x -= 5;
-        theta[LEFT_UPPER_ARM_ID].z -= 2.5;
-        theta[RIGHT_UPPER_ARM_ID].z += 2.5;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-
-        theta[LEFT_UPPER_LEG_ID].z -= 0.5;
-        theta[RIGHT_UPPER_LEG_ID].z += 0.5;
-        initNodes(LEFT_UPPER_LEG_ID);
-        initNodes(RIGHT_UPPER_LEG_ID);
-        theta[LEFT_LOWER_LEG_ID].z += 1;
-        theta[RIGHT_LOWER_LEG_ID].z -= 1;
-        initNodes(LEFT_LOWER_LEG_ID);
-        initNodes(RIGHT_LOWER_LEG_ID);
-        theta[Y_COORDINATE] += 1;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        if (theta[LEFT_UPPER_ARM_ID].x <= 85) {
-          step = 4;
-        }
-      }
-      if (step == 4) {
-        theta[LEFT_UPPER_ARM_ID].x += 5;
-        theta[RIGHT_UPPER_ARM_ID].x += 5;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].x >= 180) {
-          step = 5;
-        }
-      }
-      if (step == 5) {
-        theta[TORSO_ID].x += 5;
-        initNodes(TORSO_ID);
-        theta[LEFT_UPPER_LEG_ID].x -= 5;
-        theta[RIGHT_UPPER_LEG_ID].x -= 5;
-        initNodes(LEFT_UPPER_LEG_ID);
-        initNodes(RIGHT_UPPER_LEG_ID);
-        theta[LEFT_UPPER_ARM_ID].x -= 5;
-        theta[RIGHT_UPPER_ARM_ID].x -= 5;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        up[0] += 0.3 / 18;
-        eye[0] += 5 / 18;
-        modelViewMatrix = lookAt(eye, at, up);
-        if (theta[TORSO_ID].x >= 90) {
-          step = 6;
-        }
-      }
-      if (step == 6) {
-        theta[LEFT_UPPER_ARM_ID].z -= 1;
-        theta[RIGHT_UPPER_ARM_ID].z += 1;
-        theta[LEFT_UPPER_ARM_ID].x += 3;
-        theta[RIGHT_UPPER_ARM_ID].x += 3;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z <= -18) {
-          step = 7;
-        }
-      }
-      if (step == 7) {
-        theta[TORSO_ID].x -= 5;
-        initNodes(TORSO_ID);
-        theta[LEFT_UPPER_ARM_ID].z += 2;
-        theta[RIGHT_UPPER_ARM_ID].z -= 2;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_LOWER_ARM_ID].z -= 3;
-        theta[RIGHT_LOWER_ARM_ID].z += 3;
-        initNodes(LEFT_LOWER_ARM_ID);
-        initNodes(RIGHT_LOWER_ARM_ID);
-        theta[LEFT_LOWER_LEG_ID].x += 10;
-        theta[RIGHT_LOWER_LEG_ID].x += 10;
-        initNodes(LEFT_LOWER_LEG_ID);
-        initNodes(RIGHT_LOWER_LEG_ID);
-        theta[Y_COORDINATE] -= 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        up[0] -= 0.3 / 18;
-        eye[0] -= 5 / 18;
-        modelViewMatrix = lookAt(eye, at, up);
-        if (theta[TORSO_ID].x <= 0) {
-          step = 8;
-        }
-      }
-      if (step == 8) {
-        theta[LEFT_UPPER_ARM_ID].x += 2;
-        theta[RIGHT_UPPER_ARM_ID].x += 2;
-        theta[LEFT_UPPER_ARM_ID].z -= 1;
-        theta[RIGHT_UPPER_ARM_ID].z += 1;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_LOWER_ARM_ID].z += 3;
-        theta[RIGHT_LOWER_ARM_ID].z -= 3;
-        initNodes(LEFT_LOWER_ARM_ID);
-        initNodes(RIGHT_LOWER_ARM_ID);
-        theta[LEFT_UPPER_LEG_ID].x += 5;
-        theta[RIGHT_UPPER_LEG_ID].x += 5;
-        initNodes(LEFT_UPPER_LEG_ID);
-        initNodes(RIGHT_UPPER_LEG_ID);
-        theta[LEFT_LOWER_LEG_ID].x -= 10;
-        theta[RIGHT_LOWER_LEG_ID].x -= 10;
-        initNodes(LEFT_LOWER_LEG_ID);
-        initNodes(RIGHT_LOWER_LEG_ID);
-        theta[Y_COORDINATE] += 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        if (theta[LEFT_UPPER_LEG_ID].x >= 180) {
-          step = 1;
-        }
-      }
-    }
-    if (e.key === '2') {
-      console.log('step', step);
-      if (step == 1) {
-        theta[LEFT_UPPER_ARM_ID].x -= 10;
-        theta[RIGHT_UPPER_ARM_ID].x -= 10;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].x <= 0) {
-          step = 2;
-        }
-      }
-      if (step == 2) {
-        theta[LEFT_UPPER_ARM_ID].z += 7;
-        theta[RIGHT_UPPER_ARM_ID].z -= 7;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_LOWER_ARM_ID].z -= 14;
-        theta[RIGHT_LOWER_ARM_ID].z += 14;
-        initNodes(LEFT_LOWER_ARM_ID);
-        initNodes(RIGHT_LOWER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z >= 63) {
-          step = 2.5;
-        }
-      }
-      if (step == 2.5) {
-        theta[LEFT_UPPER_ARM_ID].z -= 7;
-        theta[RIGHT_UPPER_ARM_ID].z += 7;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_LOWER_ARM_ID].z += 14;
-        theta[RIGHT_LOWER_ARM_ID].z -= 14;
-        initNodes(LEFT_LOWER_ARM_ID);
-        initNodes(RIGHT_LOWER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
-          step = 3;
-        }
-      }
-      if (step == 3) {
-        theta[LEFT_UPPER_ARM_ID].z += 7;
-        theta[RIGHT_UPPER_ARM_ID].z -= 7;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_LOWER_ARM_ID].z -= 14;
-        theta[RIGHT_LOWER_ARM_ID].z += 14;
-        initNodes(LEFT_LOWER_ARM_ID);
-        initNodes(RIGHT_LOWER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z >= 63) {
-          step = 3.5;
-        }
-      }
-      if (step == 3.5) {
-        theta[LEFT_UPPER_ARM_ID].z -= 7;
-        theta[RIGHT_UPPER_ARM_ID].z += 7;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_LOWER_ARM_ID].z += 14;
-        theta[RIGHT_LOWER_ARM_ID].z -= 14;
-        initNodes(LEFT_LOWER_ARM_ID);
-        initNodes(RIGHT_LOWER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
-          step = 4;
-        }
-      }
-      if (step == 4) {
-        theta[LEFT_UPPER_ARM_ID].x += 20;
-        theta[RIGHT_UPPER_ARM_ID].x += 20;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].x >= 160) {
-          step = 4.5;
-        }
-      }
-      if (step == 4.5) {
-        theta[LEFT_UPPER_ARM_ID].z += 10;
-        theta[RIGHT_UPPER_ARM_ID].z -= 10;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z >= 100) {
-          step = 5;
-        }
-      }
-      if (step == 5) {
-        theta[LEFT_UPPER_ARM_ID].z -= 10;
-        theta[RIGHT_UPPER_ARM_ID].z += 10;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
-          step = 5.5;
-        }
-      }
-      if (step == 5.5) {
-        theta[LEFT_UPPER_ARM_ID].x -= 20;
-        theta[RIGHT_UPPER_ARM_ID].x -= 20;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].x <= 0) {
-          step = 6;
-        }
-      }
-      if (step == 6) {
-        theta[LEFT_UPPER_ARM_ID].z += 20;
-        theta[RIGHT_UPPER_ARM_ID].z -= 20;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z >= 180) {
-          step = 6.5;
-        }
-      }
-      if (step == 6.5) {
-        theta[LEFT_UPPER_ARM_ID].x -= 10;
-        theta[RIGHT_UPPER_ARM_ID].x -= 10;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].x <= -90) {
-          step = 7;
-        }
-      }
-      if (step == 7) {
-        theta[LEFT_UPPER_ARM_ID].x += 10;
-        theta[RIGHT_UPPER_ARM_ID].x += 10;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].x >= 0) {
-          step = 7.5;
-        }
-      }
-      if (step == 7.5) {
-        console.log('theta[LEFT_UPPER_ARM_ID].x', theta[LEFT_UPPER_ARM_ID].x);
-        if (theta[LEFT_UPPER_ARM_ID].x >= -20) {
-          theta[LEFT_UPPER_ARM_ID].x = -20;
-          theta[RIGHT_UPPER_ARM_ID].x = -20;
-        }
-        theta[LEFT_UPPER_ARM_ID].z -= 40;
-        theta[RIGHT_UPPER_ARM_ID].z += 40;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z <= -180) {
-          step = 8;
-        }
-      }
-      if (step == 8) {
-        theta[LEFT_UPPER_ARM_ID].z -= 10;
-        theta[RIGHT_UPPER_ARM_ID].z += 10;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z <= -270) {
-          step = 8.5;
-        }
-      }
-      if (step == 8.5) {
-        theta[LEFT_UPPER_ARM_ID].z += 10;
-        theta[RIGHT_UPPER_ARM_ID].z -= 10;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z >= -180) {
-          step = 1;
-          theta[LEFT_UPPER_ARM_ID] = { x: 180, y: 0, z: 0 };
-          theta[RIGHT_UPPER_ARM_ID] = { x: 180, y: 0, z: 0 };
-        }
-      }
-    }
-    if (e.key === '3') {
-      console.log('step', step);
-      if (step == 1) {
-        theta[HEAD_ID].x -= 2.5;
-        initNodes(HEAD_ID);
-        theta[LEFT_UPPER_ARM_ID].z += 1;
-        theta[RIGHT_UPPER_ARM_ID].z -= 1;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_LOWER_ARM_ID].z -= 2;
-        theta[RIGHT_LOWER_ARM_ID].z += 2;
-        initNodes(LEFT_LOWER_ARM_ID);
-        initNodes(RIGHT_LOWER_ARM_ID);
-        if (theta[HEAD_ID].x <= -45) {
-          step = 2;
-        }
-      }
-      if (step == 2) {
-        theta[HEAD_ID].x -= 2.5;
-        initNodes(HEAD_ID);
-        if (theta[HEAD_ID].x <= -90) {
-          step = 3;
-        }
-      }
-      if (step == 3) {
-        theta[HEAD_ID].x += 70.0 / 18.0;
-        initNodes(HEAD_ID);
-        if (theta[HEAD_ID].x >= -20) {
-          step = 4;
-        }
-      }
-      if (step == 4) {
-        theta[HEAD_ID].x += 70.0 / 18.0;
-        initNodes(HEAD_ID);
-        if (theta[HEAD_ID].x >= 50) {
-          step = 5;
-          isRotatingHead = 1;
-        }
-      }
-      if (step == 5) {
-        theta[HEAD_ID].y += 5;
-        initNodes(HEAD_ID);
-
-        if (theta[HEAD_ID].y >= 90) {
-          step = 6;
-        }
-      }
-      if (step == 6) {
-        theta[HEAD_ID].y += 5;
-        initNodes(HEAD_ID);
-        if (theta[HEAD_ID].y >= 180) {
-          step = 7;
-        }
-      }
-      if (step == 7) {
-        theta[HEAD_ID].y += 5;
-        initNodes(HEAD_ID);
-        if (theta[HEAD_ID].y >= 270) {
-          step = 8;
-        }
-      }
-      if (step == 8) {
-        theta[HEAD_ID].y += 5;
-        theta[HEAD_ID].x -= 50.0 / 18.0;
-        initNodes(HEAD_ID);
-        theta[LEFT_UPPER_ARM_ID].z -= 1;
-        theta[RIGHT_UPPER_ARM_ID].z += 1;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_LOWER_ARM_ID].z += 2;
-        theta[RIGHT_LOWER_ARM_ID].z -= 2;
-        initNodes(LEFT_LOWER_ARM_ID);
-        initNodes(RIGHT_LOWER_ARM_ID);
-        if (theta[HEAD_ID].y >= 360) {
-          step = 9;
-          isRotatingHead = 0;
-          theta[HEAD_ID].x = 50;
-          theta[HEAD_ID].y = 0;
-        }
-      }
-      if (step == 9) {
-        theta[HEAD_ID].x -= 10;
-        initNodes(HEAD_ID);
-        if (theta[HEAD_ID].x <= 0) {
-          step = 10;
-        }
-      }
-      if (step == 10) {
-        theta[HEAD_ID].x -= 2.5;
-        initNodes(HEAD_ID);
-        theta[LEFT_UPPER_ARM_ID].z += 1;
-        theta[RIGHT_UPPER_ARM_ID].z -= 1;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_LOWER_ARM_ID].z -= 2;
-        theta[RIGHT_LOWER_ARM_ID].z += 2;
-        initNodes(LEFT_LOWER_ARM_ID);
-        initNodes(RIGHT_LOWER_ARM_ID);
-        if (theta[HEAD_ID].x <= -45) {
-          step = 11;
-        }
-      }
-      if (step == 11) {
-        theta[HEAD_ID].x -= 2.5;
-        initNodes(HEAD_ID);
-        if (theta[HEAD_ID].x <= -90) {
-          step = 12;
-        }
-      }
-      if (step == 12) {
-        theta[HEAD_ID].x += 5;
-        initNodes(HEAD_ID);
-        if (theta[HEAD_ID].x >= -20) {
-          step = 13;
-        }
-      }
-      if (step == 13) {
-        theta[HEAD_ID].x += 5;
-        initNodes(HEAD_ID);
-        if (theta[HEAD_ID].x >= 50) {
-          step = 14;
-          isRotatingHead = 1;
-        }
-      }
-      if (step == 14) {
-        theta[HEAD_ID].y -= 5;
-        initNodes(HEAD_ID);
-
-        if (theta[HEAD_ID].y <= -90) {
-          step = 15;
-        }
-      }
-      if (step == 15) {
-        theta[HEAD_ID].y -= 5;
-        initNodes(HEAD_ID);
-        if (theta[HEAD_ID].y <= -180) {
-          step = 16;
-        }
-      }
-      if (step == 16) {
-        theta[HEAD_ID].y -= 5;
-        initNodes(HEAD_ID);
-        if (theta[HEAD_ID].y <= -270) {
-          step = 17;
-        }
-      }
-      if (step == 17) {
-        theta[HEAD_ID].y -= 5;
-        theta[HEAD_ID].x -= 50.0 / 18.0;
-        initNodes(HEAD_ID);
-        theta[LEFT_UPPER_ARM_ID].z -= 1;
-        theta[RIGHT_UPPER_ARM_ID].z += 1;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_LOWER_ARM_ID].z += 2;
-        theta[RIGHT_LOWER_ARM_ID].z -= 2;
-        initNodes(LEFT_LOWER_ARM_ID);
-        initNodes(RIGHT_LOWER_ARM_ID);
-        if (theta[HEAD_ID].y <= -360) {
-          step = 18;
-          isRotatingHead = 0;
-          theta[HEAD_ID].x = 50;
-          theta[HEAD_ID].y = 0;
-        }
-      }
-      if (step == 18) {
-        theta[HEAD_ID].x -= 10;
-        initNodes(HEAD_ID);
-        if (theta[HEAD_ID].x <= 0) {
-          step = 1;
-        }
-      }
-    }
-    if (e.key === '8') {
-      if (step == 1) {
-        theta[LEFT_UPPER_ARM_ID].z += 5;
-        theta[RIGHT_UPPER_ARM_ID].z -= 5;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z >= 95) {
-          step = 2;
-        }
-      }
-      if (step == 2) {
-        theta[LEFT_UPPER_ARM_ID].z -= 5;
-        theta[RIGHT_UPPER_ARM_ID].z += 5;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_LOWER_ARM_ID].z += 9.5;
-        theta[RIGHT_LOWER_ARM_ID].z -= 9.5;
-        initNodes(LEFT_LOWER_ARM_ID);
-        initNodes(RIGHT_LOWER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
-          step = 3;
-        }
-      }
-      if (step == 3) {
-        theta[LEFT_UPPER_ARM_ID].z += 10;
-        theta[RIGHT_UPPER_ARM_ID].z -= 10;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_LOWER_ARM_ID].z -= 10;
-        theta[RIGHT_LOWER_ARM_ID].z += 10;
-        initNodes(LEFT_LOWER_ARM_ID);
-        initNodes(RIGHT_LOWER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z >= 180) {
-          step = 4;
-        }
-      }
-      if (step == 4) {
-        theta[LEFT_UPPER_ARM_ID].z -= 10;
-        theta[RIGHT_UPPER_ARM_ID].z += 10;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
-          step = 5;
-        }
-      }
-      if (step == 5) {
-        theta[LEFT_UPPER_ARM_ID].z += 5;
-        theta[RIGHT_UPPER_ARM_ID].z -= 5;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[RIGHT_UPPER_LEG_ID].z -= 5;
-        initNodes(RIGHT_UPPER_LEG_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z >= 90) {
-          step = 6;
-        }
-      }
-      if (step == 6) {
-        theta[LEFT_UPPER_ARM_ID].z -= 5;
-        theta[RIGHT_UPPER_ARM_ID].z += 5;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[RIGHT_UPPER_LEG_ID].z += 5;
-        initNodes(RIGHT_UPPER_LEG_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
-          step = 7;
-        }
-      }
-      if (step == 7) {
-        theta[LEFT_UPPER_ARM_ID].z += 5;
-        theta[RIGHT_UPPER_ARM_ID].z -= 5;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_UPPER_LEG_ID].z += 5;
-        initNodes(LEFT_UPPER_LEG_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z >= 90) {
-          step = 8;
-        }
-      }
-      if (step == 8) {
-        theta[LEFT_UPPER_ARM_ID].z -= 5;
-        theta[RIGHT_UPPER_ARM_ID].z += 5;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_UPPER_LEG_ID].z -= 5;
-        initNodes(LEFT_UPPER_LEG_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
-          step = 1;
-        }
-      }
-    }
-    if (e.key === '0') {
-      if (step == 1) {
-        theta[Y_COORDINATE] += 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        if (theta[Y_COORDINATE] >= 100) {
-          step = 1.5;
-        }
-      }
-      if (step == 1.5) {
-        theta[Y_COORDINATE] -= 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        if (theta[Y_COORDINATE] <= 0) {
-          step = 2;
-        }
-      }
-      if (step == 2) {
-        theta[Y_COORDINATE] += 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        if (theta[Y_COORDINATE] >= 100) {
-          step = 2.5;
-        }
-      }
-      if (step == 2.5) {
-        theta[Y_COORDINATE] -= 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        if (theta[Y_COORDINATE] <= 0) {
-          step = 3;
-        }
-      }
-      if (step == 3) {
-        theta[Y_COORDINATE] += 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        if (theta[Y_COORDINATE] >= 100) {
-          step = 3.5;
-        }
-      }
-      if (step == 3.5) {
-        theta[Y_COORDINATE] -= 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        if (theta[Y_COORDINATE] <= 0) {
-          step = 4;
-        }
-      }
-      if (step == 4) {
-        theta[Y_COORDINATE] += 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        if (theta[Y_COORDINATE] >= 100) {
-          step = 4.5;
-        }
-      }
-      if (step == 4.5) {
-        theta[Y_COORDINATE] -= 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        if (theta[Y_COORDINATE] <= 0) {
-          step = 5;
-        }
-      }
-      if (step == 5) {
-        theta[Y_COORDINATE] += 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        theta[LEFT_UPPER_ARM_ID].z += 9;
-        theta[RIGHT_UPPER_ARM_ID].z -= 9;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[Y_COORDINATE] >= 100) {
-          step = 5.5;
-        }
-      }
-      if (step == 5.5) {
-        theta[Y_COORDINATE] -= 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        theta[LEFT_UPPER_ARM_ID].z += 9;
-        theta[RIGHT_UPPER_ARM_ID].z -= 9;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[Y_COORDINATE] <= 0) {
-          step = 6;
-        }
-      }
-      if (step == 6) {
-        theta[Y_COORDINATE] += 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        theta[LEFT_UPPER_ARM_ID].z -= 9;
-        theta[RIGHT_UPPER_ARM_ID].z += 9;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[Y_COORDINATE] >= 100) {
-          step = 6.5;
-        }
-      }
-      if (step == 6.5) {
-        theta[Y_COORDINATE] -= 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        theta[LEFT_UPPER_ARM_ID].z -= 9;
-        theta[RIGHT_UPPER_ARM_ID].z += 9;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[Y_COORDINATE] <= 0) {
-          step = 7;
-        }
-      }
-      if (step == 7) {
-        theta[Y_COORDINATE] += 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        theta[LEFT_UPPER_ARM_ID].z += 9;
-        theta[RIGHT_UPPER_ARM_ID].z -= 9;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[Y_COORDINATE] >= 100) {
-          step = 7.5;
-        }
-      }
-      if (step == 7.5) {
-        theta[Y_COORDINATE] -= 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        theta[LEFT_UPPER_ARM_ID].z += 9;
-        theta[RIGHT_UPPER_ARM_ID].z -= 9;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[Y_COORDINATE] <= 0) {
-          step = 8;
-        }
-      }
-      if (step == 8) {
-        theta[Y_COORDINATE] += 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        theta[LEFT_UPPER_ARM_ID].z -= 9;
-        theta[RIGHT_UPPER_ARM_ID].z += 9;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[Y_COORDINATE] >= 100) {
-          step = 8.5;
-        }
-      }
-      if (step == 8.5) {
-        theta[Y_COORDINATE] -= 10;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        theta[LEFT_UPPER_ARM_ID].z -= 9;
-        theta[RIGHT_UPPER_ARM_ID].z += 9;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[Y_COORDINATE] <= 0) {
-          step = 1;
-        }
-      }
-    }
-    if (e.key === '-') {
-      if (step == 1) {
-        theta[LEFT_UPPER_ARM_ID].z += 5;
-        theta[RIGHT_UPPER_ARM_ID].z -= 5;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[RIGHT_UPPER_LEG_ID].x -= 5;
-        theta[RIGHT_LOWER_LEG_ID].x += 5;
-        initNodes(RIGHT_UPPER_LEG_ID);
-        initNodes(RIGHT_LOWER_LEG_ID);
-        if (theta[RIGHT_UPPER_LEG_ID].x <= 85) {
-          step = 2;
-        }
-      }
-      if (step == 2) {
-        theta[LEFT_UPPER_ARM_ID].z -= 7;
-        theta[RIGHT_UPPER_ARM_ID].z += 7;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[RIGHT_UPPER_LEG_ID].x += 5;
-        theta[RIGHT_LOWER_LEG_ID].x -= 5;
-        initNodes(RIGHT_UPPER_LEG_ID);
-        initNodes(RIGHT_LOWER_LEG_ID);
-        if (theta[RIGHT_UPPER_LEG_ID].x >= 180) {
-          step = 3;
-        }
-      }
-      if (step == 3) {
-        theta[LEFT_UPPER_ARM_ID].z += 7;
-        theta[RIGHT_UPPER_ARM_ID].z -= 7;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_UPPER_LEG_ID].x -= 5;
-        theta[LEFT_LOWER_LEG_ID].x += 5;
-        initNodes(LEFT_UPPER_LEG_ID);
-        initNodes(LEFT_LOWER_LEG_ID);
-        if (theta[LEFT_UPPER_LEG_ID].x <= 85) {
-          step = 4;
-        }
-      }
-      if (step == 4) {
-        theta[LEFT_UPPER_ARM_ID].z -= 7;
-        theta[RIGHT_UPPER_ARM_ID].z += 7;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_UPPER_LEG_ID].x += 5;
-        theta[LEFT_LOWER_LEG_ID].x -= 5;
-        initNodes(LEFT_UPPER_LEG_ID);
-        initNodes(LEFT_LOWER_LEG_ID);
-        if (theta[LEFT_UPPER_LEG_ID].x >= 180) {
-          step = 5;
-        }
-      }
-      if (step == 5) {
-        theta[LEFT_UPPER_ARM_ID].z += 7;
-        theta[RIGHT_UPPER_ARM_ID].z -= 7;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z >= 90) {
-          step = 6;
-        }
-      }
-      if (step == 6) {
-        theta[LEFT_UPPER_ARM_ID].z -= 7;
-        theta[RIGHT_UPPER_ARM_ID].z += 7;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_UPPER_LEG_ID].z += 1;
-        theta[RIGHT_UPPER_LEG_ID].z -= 1;
-        initNodes(LEFT_UPPER_LEG_ID);
-        initNodes(RIGHT_UPPER_LEG_ID);
-        theta[LEFT_LOWER_LEG_ID].z -= 2;
-        theta[RIGHT_LOWER_LEG_ID].z += 2;
-        initNodes(LEFT_LOWER_LEG_ID);
-        initNodes(RIGHT_LOWER_LEG_ID);
-        theta[Y_COORDINATE] -= 1;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z <= -36) {
-          step = 7;
-        }
-      }
-      if (step == 7) {
-        theta[LEFT_UPPER_ARM_ID].z += 7;
-        theta[RIGHT_UPPER_ARM_ID].z -= 7;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        theta[LEFT_UPPER_LEG_ID].z -= 1;
-        theta[RIGHT_UPPER_LEG_ID].z += 1;
-        initNodes(LEFT_UPPER_LEG_ID);
-        initNodes(RIGHT_UPPER_LEG_ID);
-        theta[LEFT_LOWER_LEG_ID].z += 2;
-        theta[RIGHT_LOWER_LEG_ID].z -= 2;
-        initNodes(LEFT_LOWER_LEG_ID);
-        initNodes(RIGHT_LOWER_LEG_ID);
-        theta[Y_COORDINATE] += 1;
-        gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
-        initNodes(TORSO_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z >= 90) {
-          step = 8;
-        }
-      }
-      if (step == 8) {
-        theta[LEFT_UPPER_ARM_ID].z -= 7;
-        theta[RIGHT_UPPER_ARM_ID].z += 7;
-        initNodes(LEFT_UPPER_ARM_ID);
-        initNodes(RIGHT_UPPER_ARM_ID);
-        if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
-          step = 1;
-        }
-      }
-    }
-  });
-
-  initAll();
+    gl.useProgram(program[i]);
+    modelViewMatrix = lookAt(eye, at, up);
+    projectionMatrix = perspective(fovy, aspect, near, far);
+    instanceMatrix = mat4();
+    gl.uniformMatrix4fv(gl.getUniformLocation(program[i], 'modelViewMatrix'), false, flatten(modelViewMatrix));
+    gl.uniformMatrix4fv(gl.getUniformLocation(program[i], 'projectionMatrix'), false, flatten(projectionMatrix));
+    modelViewMatrixLoc = gl.getUniformLocation(program[i], 'modelViewMatrix');
+  }
+  document.getElementById('body').addEventListener('keydown', stretching);
 
   requestAnimFrame(render);
 };
 
 function render() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  initAll();
   traverse(TORSO_ID);
   requestAnimFrame(render);
 }
@@ -1304,3 +409,1534 @@ function cube() {
   pushPointsArray(4, 5, 6, 7);
   pushColorsArray(0, 1, 2, 3);
 }
+
+const stretching = (e) => {
+  if (e.key === '1') {
+    console.log('step', step);
+    if (step == 1) {
+      theta[LEFT_UPPER_ARM_ID].x -= 5;
+      theta[RIGHT_UPPER_ARM_ID].x -= 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x <= 85) {
+        step = 2;
+      }
+    }
+    if (step == 2) {
+      theta[LEFT_UPPER_ARM_ID].x += 5;
+      theta[RIGHT_UPPER_ARM_ID].x += 5;
+      theta[LEFT_UPPER_ARM_ID].z += 2.5;
+      theta[RIGHT_UPPER_ARM_ID].z -= 2.5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+
+      theta[LEFT_UPPER_LEG_ID].z += 0.5;
+      theta[RIGHT_UPPER_LEG_ID].z -= 0.5;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_LOWER_LEG_ID].z -= 1;
+      theta[RIGHT_LOWER_LEG_ID].z += 1;
+      initNodes(LEFT_LOWER_LEG_ID);
+      initNodes(RIGHT_LOWER_LEG_ID);
+      theta[Y_COORDINATE] -= 1;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x >= 180) {
+        step = 2.5;
+      }
+    }
+    if (step == 2.5) {
+      theta[LEFT_UPPER_ARM_ID].x += 5;
+      theta[RIGHT_UPPER_ARM_ID].x += 5;
+      theta[LEFT_UPPER_ARM_ID].z += 2.5;
+      theta[RIGHT_UPPER_ARM_ID].z -= 2.5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+
+      theta[LEFT_UPPER_LEG_ID].z -= 0.5;
+      theta[RIGHT_UPPER_LEG_ID].z += 0.5;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_LOWER_LEG_ID].z += 1;
+      theta[RIGHT_LOWER_LEG_ID].z -= 1;
+      initNodes(LEFT_LOWER_LEG_ID);
+      initNodes(RIGHT_LOWER_LEG_ID);
+      theta[Y_COORDINATE] += 1;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x >= 270) {
+        step = 3;
+      }
+    }
+    if (step == 3) {
+      theta[LEFT_UPPER_ARM_ID].x -= 5;
+      theta[RIGHT_UPPER_ARM_ID].x -= 5;
+      theta[LEFT_UPPER_ARM_ID].z -= 2.5;
+      theta[RIGHT_UPPER_ARM_ID].z += 2.5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+
+      theta[LEFT_UPPER_LEG_ID].z += 0.5;
+      theta[RIGHT_UPPER_LEG_ID].z -= 0.5;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_LOWER_LEG_ID].z -= 1;
+      theta[RIGHT_LOWER_LEG_ID].z += 1;
+      initNodes(LEFT_LOWER_LEG_ID);
+      initNodes(RIGHT_LOWER_LEG_ID);
+      theta[Y_COORDINATE] -= 1;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x <= 180) {
+        step = 3.5;
+      }
+    }
+    if (step == 3.5) {
+      theta[LEFT_UPPER_ARM_ID].x -= 5;
+      theta[RIGHT_UPPER_ARM_ID].x -= 5;
+      theta[LEFT_UPPER_ARM_ID].z -= 2.5;
+      theta[RIGHT_UPPER_ARM_ID].z += 2.5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+
+      theta[LEFT_UPPER_LEG_ID].z -= 0.5;
+      theta[RIGHT_UPPER_LEG_ID].z += 0.5;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_LOWER_LEG_ID].z += 1;
+      theta[RIGHT_LOWER_LEG_ID].z -= 1;
+      initNodes(LEFT_LOWER_LEG_ID);
+      initNodes(RIGHT_LOWER_LEG_ID);
+      theta[Y_COORDINATE] += 1;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x <= 85) {
+        step = 4;
+      }
+    }
+    if (step == 4) {
+      theta[LEFT_UPPER_ARM_ID].x += 5;
+      theta[RIGHT_UPPER_ARM_ID].x += 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x >= 180) {
+        step = 5;
+      }
+    }
+    if (step == 5) {
+      theta[TORSO_ID].x += 5;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].x -= 5;
+      theta[RIGHT_UPPER_LEG_ID].x -= 5;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_UPPER_ARM_ID].x -= 5;
+      theta[RIGHT_UPPER_ARM_ID].x -= 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      up[0] += 0.3 / 18;
+      eye[0] += 5 / 18;
+      modelViewMatrix = lookAt(eye, at, up);
+      if (theta[TORSO_ID].x >= 90) {
+        step = 6;
+      }
+    }
+    if (step == 6) {
+      theta[LEFT_UPPER_ARM_ID].z -= 1;
+      theta[RIGHT_UPPER_ARM_ID].z += 1;
+      theta[LEFT_UPPER_ARM_ID].x += 3;
+      theta[RIGHT_UPPER_ARM_ID].x += 3;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= -18) {
+        step = 7;
+      }
+    }
+    if (step == 7) {
+      theta[TORSO_ID].x -= 5;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_ARM_ID].z += 2;
+      theta[RIGHT_UPPER_ARM_ID].z -= 2;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z -= 3;
+      theta[RIGHT_LOWER_ARM_ID].z += 3;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      theta[LEFT_LOWER_LEG_ID].x += 10;
+      theta[RIGHT_LOWER_LEG_ID].x += 10;
+      initNodes(LEFT_LOWER_LEG_ID);
+      initNodes(RIGHT_LOWER_LEG_ID);
+      theta[Y_COORDINATE] -= 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      up[0] -= 0.3 / 18;
+      eye[0] -= 5 / 18;
+      modelViewMatrix = lookAt(eye, at, up);
+      if (theta[TORSO_ID].x <= 0) {
+        step = 8;
+      }
+    }
+    if (step == 8) {
+      theta[LEFT_UPPER_ARM_ID].x += 2;
+      theta[RIGHT_UPPER_ARM_ID].x += 2;
+      theta[LEFT_UPPER_ARM_ID].z -= 1;
+      theta[RIGHT_UPPER_ARM_ID].z += 1;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z += 3;
+      theta[RIGHT_LOWER_ARM_ID].z -= 3;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      theta[LEFT_UPPER_LEG_ID].x += 5;
+      theta[RIGHT_UPPER_LEG_ID].x += 5;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_LOWER_LEG_ID].x -= 10;
+      theta[RIGHT_LOWER_LEG_ID].x -= 10;
+      initNodes(LEFT_LOWER_LEG_ID);
+      initNodes(RIGHT_LOWER_LEG_ID);
+      theta[Y_COORDINATE] += 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[LEFT_UPPER_LEG_ID].x >= 180) {
+        step = 1;
+      }
+    }
+  }
+  if (e.key === '2') {
+    console.log('step', step);
+    if (step == 1) {
+      theta[LEFT_UPPER_ARM_ID].x -= 10;
+      theta[RIGHT_UPPER_ARM_ID].x -= 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x <= 0) {
+        step = 2;
+      }
+    }
+    if (step == 2) {
+      theta[LEFT_UPPER_ARM_ID].z += 7;
+      theta[RIGHT_UPPER_ARM_ID].z -= 7;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z -= 14;
+      theta[RIGHT_LOWER_ARM_ID].z += 14;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 63) {
+        step = 2.5;
+      }
+    }
+    if (step == 2.5) {
+      theta[LEFT_UPPER_ARM_ID].z -= 7;
+      theta[RIGHT_UPPER_ARM_ID].z += 7;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z += 14;
+      theta[RIGHT_LOWER_ARM_ID].z -= 14;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
+        step = 3;
+      }
+    }
+    if (step == 3) {
+      theta[LEFT_UPPER_ARM_ID].z += 7;
+      theta[RIGHT_UPPER_ARM_ID].z -= 7;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z -= 14;
+      theta[RIGHT_LOWER_ARM_ID].z += 14;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 63) {
+        step = 3.5;
+      }
+    }
+    if (step == 3.5) {
+      theta[LEFT_UPPER_ARM_ID].z -= 7;
+      theta[RIGHT_UPPER_ARM_ID].z += 7;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z += 14;
+      theta[RIGHT_LOWER_ARM_ID].z -= 14;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
+        step = 4;
+      }
+    }
+    if (step == 4) {
+      theta[LEFT_UPPER_ARM_ID].x += 20;
+      theta[RIGHT_UPPER_ARM_ID].x += 20;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x >= 160) {
+        step = 4.5;
+      }
+    }
+    if (step == 4.5) {
+      theta[LEFT_UPPER_ARM_ID].z += 10;
+      theta[RIGHT_UPPER_ARM_ID].z -= 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 100) {
+        step = 5;
+      }
+    }
+    if (step == 5) {
+      theta[LEFT_UPPER_ARM_ID].z -= 10;
+      theta[RIGHT_UPPER_ARM_ID].z += 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
+        step = 5.5;
+      }
+    }
+    if (step == 5.5) {
+      theta[LEFT_UPPER_ARM_ID].x -= 20;
+      theta[RIGHT_UPPER_ARM_ID].x -= 20;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x <= 0) {
+        step = 6;
+      }
+    }
+    if (step == 6) {
+      theta[LEFT_UPPER_ARM_ID].z += 20;
+      theta[RIGHT_UPPER_ARM_ID].z -= 20;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 180) {
+        step = 6.5;
+      }
+    }
+    if (step == 6.5) {
+      theta[LEFT_UPPER_ARM_ID].x -= 10;
+      theta[RIGHT_UPPER_ARM_ID].x -= 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x <= -90) {
+        step = 7;
+      }
+    }
+    if (step == 7) {
+      theta[LEFT_UPPER_ARM_ID].x += 10;
+      theta[RIGHT_UPPER_ARM_ID].x += 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x >= 0) {
+        step = 7.5;
+      }
+    }
+    if (step == 7.5) {
+      // console.log('theta[LEFT_UPPER_ARM_ID].x', theta[LEFT_UPPER_ARM_ID].x);
+      if (theta[LEFT_UPPER_ARM_ID].x >= -20) {
+        theta[LEFT_UPPER_ARM_ID].x = -20;
+        theta[RIGHT_UPPER_ARM_ID].x = -20;
+      }
+      theta[LEFT_UPPER_ARM_ID].z -= 40;
+      theta[RIGHT_UPPER_ARM_ID].z += 40;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= -180) {
+        step = 8;
+      }
+    }
+    if (step == 8) {
+      theta[LEFT_UPPER_ARM_ID].z -= 10;
+      theta[RIGHT_UPPER_ARM_ID].z += 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= -270) {
+        step = 8.5;
+      }
+    }
+    if (step == 8.5) {
+      theta[LEFT_UPPER_ARM_ID].z += 10;
+      theta[RIGHT_UPPER_ARM_ID].z -= 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= -180) {
+        step = 1;
+        theta[LEFT_UPPER_ARM_ID] = { x: 180, y: 0, z: 0 };
+        theta[RIGHT_UPPER_ARM_ID] = { x: 180, y: 0, z: 0 };
+      }
+    }
+  }
+  if (e.key === '3') {
+    console.log('step', step);
+    if (step == 1) {
+      theta[HEAD_ID].x -= 2.5;
+      initNodes(HEAD_ID);
+      theta[LEFT_UPPER_ARM_ID].z += 1;
+      theta[RIGHT_UPPER_ARM_ID].z -= 1;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z -= 2;
+      theta[RIGHT_LOWER_ARM_ID].z += 2;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      if (theta[HEAD_ID].x <= -45) {
+        step = 2;
+      }
+    }
+    if (step == 2) {
+      theta[HEAD_ID].x -= 2.5;
+      initNodes(HEAD_ID);
+      if (theta[HEAD_ID].x <= -90) {
+        step = 3;
+      }
+    }
+    if (step == 3) {
+      theta[HEAD_ID].x += 70.0 / 18.0;
+      initNodes(HEAD_ID);
+      if (theta[HEAD_ID].x >= -20) {
+        step = 4;
+      }
+    }
+    if (step == 4) {
+      theta[HEAD_ID].x += 70.0 / 18.0;
+      initNodes(HEAD_ID);
+      if (theta[HEAD_ID].x >= 50) {
+        step = 5;
+        isRotatingHead = 1;
+      }
+    }
+    if (step == 5) {
+      theta[HEAD_ID].y += 5;
+      initNodes(HEAD_ID);
+
+      if (theta[HEAD_ID].y >= 90) {
+        step = 6;
+      }
+    }
+    if (step == 6) {
+      theta[HEAD_ID].y += 5;
+      initNodes(HEAD_ID);
+      if (theta[HEAD_ID].y >= 180) {
+        step = 7;
+      }
+    }
+    if (step == 7) {
+      theta[HEAD_ID].y += 5;
+      initNodes(HEAD_ID);
+      if (theta[HEAD_ID].y >= 270) {
+        step = 8;
+      }
+    }
+    if (step == 8) {
+      theta[HEAD_ID].y += 5;
+      theta[HEAD_ID].x -= 50.0 / 18.0;
+      initNodes(HEAD_ID);
+      theta[LEFT_UPPER_ARM_ID].z -= 1;
+      theta[RIGHT_UPPER_ARM_ID].z += 1;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z += 2;
+      theta[RIGHT_LOWER_ARM_ID].z -= 2;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      if (theta[HEAD_ID].y >= 360) {
+        step = 9;
+        isRotatingHead = 0;
+        theta[HEAD_ID].x = 50;
+        theta[HEAD_ID].y = 0;
+      }
+    }
+    if (step == 9) {
+      theta[HEAD_ID].x -= 10;
+      initNodes(HEAD_ID);
+      if (theta[HEAD_ID].x <= 0) {
+        step = 10;
+      }
+    }
+    if (step == 10) {
+      theta[HEAD_ID].x -= 2.5;
+      initNodes(HEAD_ID);
+      theta[LEFT_UPPER_ARM_ID].z += 1;
+      theta[RIGHT_UPPER_ARM_ID].z -= 1;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z -= 2;
+      theta[RIGHT_LOWER_ARM_ID].z += 2;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      if (theta[HEAD_ID].x <= -45) {
+        step = 11;
+      }
+    }
+    if (step == 11) {
+      theta[HEAD_ID].x -= 2.5;
+      initNodes(HEAD_ID);
+      if (theta[HEAD_ID].x <= -90) {
+        step = 12;
+      }
+    }
+    if (step == 12) {
+      theta[HEAD_ID].x += 70.0 / 18.0;
+      initNodes(HEAD_ID);
+      if (theta[HEAD_ID].x >= -20) {
+        step = 13;
+      }
+    }
+    if (step == 13) {
+      theta[HEAD_ID].x += 70.0 / 18.0;
+      initNodes(HEAD_ID);
+      if (theta[HEAD_ID].x >= 50) {
+        step = 14;
+        isRotatingHead = 1;
+      }
+    }
+    if (step == 14) {
+      theta[HEAD_ID].y -= 5;
+      initNodes(HEAD_ID);
+
+      if (theta[HEAD_ID].y <= -90) {
+        step = 15;
+      }
+    }
+    if (step == 15) {
+      theta[HEAD_ID].y -= 5;
+      initNodes(HEAD_ID);
+      if (theta[HEAD_ID].y <= -180) {
+        step = 16;
+      }
+    }
+    if (step == 16) {
+      theta[HEAD_ID].y -= 5;
+      initNodes(HEAD_ID);
+      if (theta[HEAD_ID].y <= -270) {
+        step = 17;
+      }
+    }
+    if (step == 17) {
+      theta[HEAD_ID].y -= 5;
+      theta[HEAD_ID].x -= 50.0 / 18.0;
+      initNodes(HEAD_ID);
+      theta[LEFT_UPPER_ARM_ID].z -= 1;
+      theta[RIGHT_UPPER_ARM_ID].z += 1;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z += 2;
+      theta[RIGHT_LOWER_ARM_ID].z -= 2;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      if (theta[HEAD_ID].y <= -360) {
+        step = 18;
+        isRotatingHead = 0;
+        theta[HEAD_ID].x = 50;
+        theta[HEAD_ID].y = 0;
+      }
+    }
+    if (step == 18) {
+      theta[HEAD_ID].x -= 10;
+      initNodes(HEAD_ID);
+      if (theta[HEAD_ID].x <= 0) {
+        step = 1;
+      }
+    }
+  }
+  if (e.key === '4') {
+    console.log('step', step);
+    if (step == 1) {
+      theta[LEFT_UPPER_ARM_ID].x -= 5;
+      theta[RIGHT_UPPER_ARM_ID].x -= 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x <= 90) {
+        step = 2;
+      }
+    }
+    if (step == 2) {
+      theta[LEFT_UPPER_ARM_ID].z += 65.0 / 18.0;
+      theta[RIGHT_UPPER_ARM_ID].z -= 65.0 / 18.0;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z -= (65.0 / 18.0) * 2;
+      theta[RIGHT_LOWER_ARM_ID].z += (65.0 / 18.0) * 2;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 65) {
+        step = 3;
+      }
+    }
+    if (step == 3) {
+      theta[LEFT_UPPER_ARM_ID].z += 25.0 / 18.0;
+      theta[RIGHT_UPPER_ARM_ID].z -= 25.0 / 18.0;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z += (25.0 / 18.0) * 4.9;
+      theta[RIGHT_LOWER_ARM_ID].z -= (25.0 / 18.0) * 4.9;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 90) {
+        step = 4;
+      }
+    }
+    if (step == 4) {
+      theta[LEFT_UPPER_ARM_ID].z -= 5;
+      theta[RIGHT_UPPER_ARM_ID].z += 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= 2) {
+        step = 5;
+        theta[LEFT_UPPER_ARM_ID].z = 0;
+      }
+    }
+    if (step == 5) {
+      theta[LEFT_UPPER_ARM_ID].x += 10;
+      theta[RIGHT_UPPER_ARM_ID].x += 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x >= 180) {
+        step = 5.5;
+      }
+    }
+    if (step == 5.5) {
+      theta[LEFT_UPPER_ARM_ID].x -= 10;
+      theta[RIGHT_UPPER_ARM_ID].x -= 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_UPPER_LEG_ID].x += 3;
+      theta[RIGHT_UPPER_LEG_ID].x -= 3;
+      theta[RIGHT_LOWER_LEG_ID].x += 3;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      initNodes(RIGHT_LOWER_LEG_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x <= 90) {
+        step = 6;
+      }
+    }
+    if (step == 6) {
+      theta[LEFT_UPPER_ARM_ID].z += 10;
+      theta[RIGHT_UPPER_ARM_ID].z -= 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 90) {
+        step = 6.5;
+      }
+    }
+    if (step == 6.5) {
+      theta[LEFT_UPPER_ARM_ID].z -= 10;
+      theta[RIGHT_UPPER_ARM_ID].z += 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
+        step = 7;
+      }
+    }
+    if (step == 7) {
+      theta[LEFT_UPPER_ARM_ID].z += 10;
+      theta[RIGHT_UPPER_ARM_ID].z -= 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 90) {
+        step = 7.5;
+      }
+    }
+    if (step == 7.5) {
+      theta[LEFT_UPPER_ARM_ID].z -= 10;
+      theta[RIGHT_UPPER_ARM_ID].z += 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
+        step = 8;
+      }
+    }
+    if (step == 8) {
+      theta[LEFT_UPPER_ARM_ID].x += 5;
+      theta[RIGHT_UPPER_ARM_ID].x += 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_UPPER_LEG_ID].x -= 1.5;
+      theta[RIGHT_UPPER_LEG_ID].x += 1.5;
+      theta[RIGHT_LOWER_LEG_ID].x -= 1.5;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      initNodes(RIGHT_LOWER_LEG_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x >= 180) {
+        step = 9;
+      }
+    }
+    if (step == 9) {
+      theta[LEFT_UPPER_ARM_ID].x -= 5;
+      theta[RIGHT_UPPER_ARM_ID].x -= 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x <= 90) {
+        step = 10;
+      }
+    }
+    if (step == 10) {
+      theta[LEFT_UPPER_ARM_ID].z += 65.0 / 18.0;
+      theta[RIGHT_UPPER_ARM_ID].z -= 65.0 / 18.0;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z -= (65.0 / 18.0) * 2;
+      theta[RIGHT_LOWER_ARM_ID].z += (65.0 / 18.0) * 2;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 65) {
+        step = 11;
+      }
+    }
+    if (step == 11) {
+      theta[LEFT_UPPER_ARM_ID].z += 25.0 / 18.0;
+      theta[RIGHT_UPPER_ARM_ID].z -= 25.0 / 18.0;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z += (25.0 / 18.0) * 4.9;
+      theta[RIGHT_LOWER_ARM_ID].z -= (25.0 / 18.0) * 4.9;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 90) {
+        step = 12;
+      }
+    }
+    if (step == 12) {
+      theta[LEFT_UPPER_ARM_ID].z -= 5;
+      theta[RIGHT_UPPER_ARM_ID].z += 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= 2) {
+        step = 13;
+        theta[LEFT_UPPER_ARM_ID].z = 0;
+      }
+    }
+    if (step == 13) {
+      theta[LEFT_UPPER_ARM_ID].x += 10;
+      theta[RIGHT_UPPER_ARM_ID].x += 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x >= 180) {
+        step = 13.5;
+      }
+    }
+    if (step == 13.5) {
+      theta[LEFT_UPPER_ARM_ID].x -= 10;
+      theta[RIGHT_UPPER_ARM_ID].x -= 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[RIGHT_UPPER_LEG_ID].x += 3;
+      theta[LEFT_UPPER_LEG_ID].x -= 3;
+      theta[LEFT_LOWER_LEG_ID].x += 3;
+      initNodes(RIGHT_UPPER_LEG_ID);
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(LEFT_LOWER_LEG_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x <= 90) {
+        step = 14;
+      }
+    }
+    if (step == 14) {
+      theta[LEFT_UPPER_ARM_ID].z += 10;
+      theta[RIGHT_UPPER_ARM_ID].z -= 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 90) {
+        step = 14.5;
+      }
+    }
+    if (step == 14.5) {
+      theta[LEFT_UPPER_ARM_ID].z -= 10;
+      theta[RIGHT_UPPER_ARM_ID].z += 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
+        step = 15;
+      }
+    }
+    if (step == 15) {
+      theta[LEFT_UPPER_ARM_ID].z += 10;
+      theta[RIGHT_UPPER_ARM_ID].z -= 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 90) {
+        step = 15.5;
+      }
+    }
+    if (step == 15.5) {
+      theta[LEFT_UPPER_ARM_ID].z -= 10;
+      theta[RIGHT_UPPER_ARM_ID].z += 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
+        step = 16;
+      }
+    }
+    if (step == 16) {
+      theta[LEFT_UPPER_ARM_ID].x += 5;
+      theta[RIGHT_UPPER_ARM_ID].x += 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[RIGHT_UPPER_LEG_ID].x -= 1.5;
+      theta[LEFT_UPPER_LEG_ID].x += 1.5;
+      theta[LEFT_LOWER_LEG_ID].x -= 1.5;
+      initNodes(RIGHT_UPPER_LEG_ID);
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(LEFT_LOWER_LEG_ID);
+      if (theta[LEFT_UPPER_ARM_ID].x >= 180) {
+        step = 1;
+      }
+    }
+  }
+  if (e.key === '5') {
+    console.log('step', step);
+    if (step == 1) {
+      theta[LEFT_UPPER_LEG_ID].z += 12.0 / 18.0;
+      theta[RIGHT_UPPER_LEG_ID].z -= 12.0 / 18.0;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_UPPER_ARM_ID].z += 4.7;
+      theta[RIGHT_UPPER_ARM_ID].z -= 4.7;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[X_COORDINATE] += 2.2;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[LEFT_UPPER_LEG_ID].z >= 12) {
+        step = 2;
+      }
+    }
+    if (step == 2) {
+      theta[TORSO_ID].z += 1;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].z += 1;
+      theta[RIGHT_UPPER_LEG_ID].z += 1;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[RIGHT_UPPER_ARM_ID].z -= 5;
+      theta[LEFT_UPPER_ARM_ID].z -= 3;
+      theta[LEFT_LOWER_ARM_ID].z -= 3;
+      initNodes(RIGHT_UPPER_ARM_ID);
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(LEFT_LOWER_ARM_ID);
+      if (theta[TORSO_ID].z >= 18) {
+        step = 3;
+      }
+    }
+    if (step == 3) {
+      theta[TORSO_ID].z -= 12.0 / 18;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].z -= 12.0 / 18;
+      theta[RIGHT_UPPER_LEG_ID].z -= 12.0 / 18;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      if (theta[TORSO_ID].z <= 12) {
+        step = 3.5;
+      }
+    }
+    if (step == 3.5) {
+      theta[TORSO_ID].z += 12.0 / 18;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].z += 12.0 / 18;
+      theta[RIGHT_UPPER_LEG_ID].z += 12.0 / 18;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      if (theta[TORSO_ID].z >= 18) {
+        step = 4;
+      }
+    }
+    if (step == 4) {
+      theta[TORSO_ID].z -= 2;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].z -= 2;
+      theta[RIGHT_UPPER_LEG_ID].z -= 2;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[RIGHT_UPPER_ARM_ID].z += 10;
+      theta[LEFT_UPPER_ARM_ID].z += 6;
+      theta[LEFT_LOWER_ARM_ID].z += 6;
+      initNodes(RIGHT_UPPER_ARM_ID);
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(LEFT_LOWER_ARM_ID);
+      if (theta[TORSO_ID].z <= 0) {
+        step = 4.5;
+      }
+    }
+    if (step == 4.5) {
+      theta[LEFT_UPPER_LEG_ID].z -= 24.0 / 18.0;
+      theta[RIGHT_UPPER_LEG_ID].z += 24.0 / 18.0;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_UPPER_ARM_ID].z -= 9.4;
+      theta[RIGHT_UPPER_ARM_ID].z += 9.4;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[X_COORDINATE] -= 4.4;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[LEFT_UPPER_LEG_ID].z <= 0.7) {
+        step = 5;
+        theta[LEFT_UPPER_ARM_ID].z = 0;
+        theta[RIGHT_UPPER_ARM_ID].z = 0;
+        theta[LEFT_UPPER_LEG_ID].z = 0;
+        theta[RIGHT_UPPER_LEG_ID].z = 0;
+        initNodes(LEFT_UPPER_ARM_ID);
+        initNodes(RIGHT_UPPER_ARM_ID);
+        initNodes(LEFT_UPPER_LEG_ID);
+        initNodes(RIGHT_UPPER_LEG_ID);
+      }
+    }
+    if (step == 5) {
+      theta[LEFT_UPPER_LEG_ID].z += 12.0 / 18.0;
+      theta[RIGHT_UPPER_LEG_ID].z -= 12.0 / 18.0;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_UPPER_ARM_ID].z += 4.7;
+      theta[RIGHT_UPPER_ARM_ID].z -= 4.7;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[X_COORDINATE] -= 2.2;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[LEFT_UPPER_LEG_ID].z >= 12) {
+        step = 6;
+      }
+    }
+    if (step == 6) {
+      theta[TORSO_ID].z -= 1;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].z -= 1;
+      theta[RIGHT_UPPER_LEG_ID].z -= 1;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_UPPER_ARM_ID].z += 5;
+      theta[RIGHT_UPPER_ARM_ID].z += 3;
+      theta[RIGHT_LOWER_ARM_ID].z += 3;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      if (theta[TORSO_ID].z <= -18) {
+        step = 7;
+      }
+    }
+    if (step == 7) {
+      theta[TORSO_ID].z += 12.0 / 18;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].z += 12.0 / 18;
+      theta[RIGHT_UPPER_LEG_ID].z += 12.0 / 18;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      if (theta[TORSO_ID].z >= -12) {
+        step = 7.5;
+      }
+    }
+    if (step == 7.5) {
+      theta[TORSO_ID].z -= 12.0 / 18;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].z -= 12.0 / 18;
+      theta[RIGHT_UPPER_LEG_ID].z -= 12.0 / 18;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      if (theta[TORSO_ID].z <= -18) {
+        step = 8;
+      }
+    }
+    if (step == 8) {
+      theta[TORSO_ID].z += 2;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].z += 2;
+      theta[RIGHT_UPPER_LEG_ID].z += 2;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_UPPER_ARM_ID].z -= 10;
+      theta[RIGHT_UPPER_ARM_ID].z -= 6;
+      theta[RIGHT_LOWER_ARM_ID].z -= 6;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      if (theta[TORSO_ID].z >= 0) {
+        step = 8.5;
+      }
+    }
+    if (step == 8.5) {
+      theta[LEFT_UPPER_LEG_ID].z -= 24.0 / 18.0;
+      theta[RIGHT_UPPER_LEG_ID].z += 24.0 / 18.0;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_UPPER_ARM_ID].z -= 9.4;
+      theta[RIGHT_UPPER_ARM_ID].z += 9.4;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[X_COORDINATE] += 4.4;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[LEFT_UPPER_LEG_ID].z <= 0.7) {
+        step = 1;
+        theta[LEFT_UPPER_ARM_ID].z = 0;
+        theta[RIGHT_UPPER_ARM_ID].z = 0;
+        theta[LEFT_UPPER_LEG_ID].z = 0;
+        theta[RIGHT_UPPER_LEG_ID].z = 0;
+        initNodes(LEFT_UPPER_ARM_ID);
+        initNodes(RIGHT_UPPER_ARM_ID);
+        initNodes(LEFT_UPPER_LEG_ID);
+        initNodes(RIGHT_UPPER_LEG_ID);
+      }
+    }
+  }
+  if (e.key === '6') {
+    console.log('step', step);
+    if (step == 1) {
+      theta[LEFT_UPPER_LEG_ID].z += 12.0 / 18.0;
+      theta[RIGHT_UPPER_LEG_ID].z -= 12.0 / 18.0;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_UPPER_ARM_ID].x -= 9.5;
+      theta[RIGHT_UPPER_ARM_ID].x -= 9.5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      // console.log('theta[RIGHT_UPPER_ARM_ID].x', theta[RIGHT_UPPER_ARM_ID].x);
+      theta[X_COORDINATE] += 2.2;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[LEFT_UPPER_LEG_ID].z >= 12) {
+        step = 2;
+      }
+    }
+    if (step == 2) {
+      theta[TORSO_ID].x += 5;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].x -= 5;
+      theta[RIGHT_UPPER_LEG_ID].x -= 5;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_UPPER_ARM_ID].x += 5;
+      theta[RIGHT_UPPER_ARM_ID].x += 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      up[0] += 0.3 / 18;
+      eye[0] += 5 / 18;
+      modelViewMatrix = lookAt(eye, at, up);
+      // console.log('theta[LEFT_UPPER_ARM_ID].x', theta[LEFT_UPPER_ARM_ID].x);
+      if (theta[TORSO_ID].x >= 90) {
+        step = 3;
+      }
+    }
+    if (step == 3) {
+      theta[TORSO_ID].x -= 2;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].x += 2;
+      theta[RIGHT_UPPER_LEG_ID].x += 2;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      // console.log('theta[LEFT_UPPER_ARM_ID].x', theta[LEFT_UPPER_ARM_ID].x);
+      if (theta[TORSO_ID].x <= 72) {
+        step = 3.5;
+      }
+    }
+    if (step == 3.5) {
+      theta[TORSO_ID].x += 2;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].x -= 2;
+      theta[RIGHT_UPPER_LEG_ID].x -= 2;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      // console.log('theta[LEFT_UPPER_ARM_ID].x', theta[LEFT_UPPER_ARM_ID].x);
+      if (theta[TORSO_ID].x >= 90) {
+        step = 4;
+      }
+    }
+    if (step == 4) {
+      theta[TORSO_ID].x -= 5;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].x += 5;
+      theta[RIGHT_UPPER_LEG_ID].x += 5;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_UPPER_ARM_ID].x -= 5;
+      theta[RIGHT_UPPER_ARM_ID].x -= 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      // console.log('theta[TORSO_ID].x', theta[TORSO_ID].x);
+
+      up[0] -= 0.3 / 18;
+      eye[0] -= 5 / 18;
+      modelViewMatrix = lookAt(eye, at, up);
+      if (theta[TORSO_ID].x <= 0) {
+        step = 5;
+      }
+    }
+    if (step == 5) {
+      theta[LEFT_UPPER_ARM_ID].x -= 20;
+      theta[RIGHT_UPPER_ARM_ID].x -= 20;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      // console.log('theta[LEFT_UPPER_ARM_ID].x', theta[LEFT_UPPER_ARM_ID].x);
+      if (theta[LEFT_UPPER_ARM_ID].x <= -180) {
+        step = 5.5;
+      }
+    }
+    if (step == 5.5) {
+      theta[LEFT_UPPER_ARM_ID].z += 4;
+      theta[RIGHT_UPPER_ARM_ID].z -= 4;
+      theta[LEFT_UPPER_ARM_ID].x += 4;
+      theta[RIGHT_UPPER_ARM_ID].x += 4;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z -= 8;
+      theta[RIGHT_LOWER_ARM_ID].z += 8;
+      theta[LEFT_LOWER_ARM_ID].x -= 8;
+      theta[RIGHT_LOWER_ARM_ID].x -= 8;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      // console.log('theta[LEFT_UPPER_ARM_ID].z', theta[LEFT_UPPER_ARM_ID].z);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 35) {
+        step = 6;
+      }
+    }
+    if (step == 6) {
+      theta[TORSO_ID].x -= 2;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].x += 2;
+      theta[RIGHT_UPPER_LEG_ID].x += 2;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      // console.log(theta[TORSO_ID].x);
+      if (theta[TORSO_ID].x <= -18) {
+        step = 6.5;
+      }
+    }
+    if (step == 6.5) {
+      theta[TORSO_ID].x += 2;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].x -= 2;
+      theta[RIGHT_UPPER_LEG_ID].x -= 2;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      // console.log(theta[TORSO_ID].x);
+      if (theta[TORSO_ID].x >= 0) {
+        step = 7;
+      }
+    }
+    if (step == 7) {
+      theta[TORSO_ID].x -= 2;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].x += 2;
+      theta[RIGHT_UPPER_LEG_ID].x += 2;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      // console.log(theta[TORSO_ID].x);
+      if (theta[TORSO_ID].x <= -18) {
+        step = 7.5;
+      }
+    }
+    if (step == 7.5) {
+      theta[TORSO_ID].x += 2;
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_LEG_ID].x -= 2;
+      theta[RIGHT_UPPER_LEG_ID].x -= 2;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      // console.log(theta[TORSO_ID].x);
+      if (theta[TORSO_ID].x >= 0) {
+        step = 8;
+      }
+    }
+    if (step == 8) {
+      theta[LEFT_UPPER_ARM_ID].z -= 2;
+      theta[RIGHT_UPPER_ARM_ID].z += 2;
+      theta[LEFT_UPPER_ARM_ID].x -= 2;
+      theta[RIGHT_UPPER_ARM_ID].x -= 2;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z += 4;
+      theta[RIGHT_LOWER_ARM_ID].z -= 4;
+      theta[LEFT_LOWER_ARM_ID].x += 4;
+      theta[RIGHT_LOWER_ARM_ID].x += 4;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      theta[LEFT_UPPER_LEG_ID].z -= 12.0 / 18.0;
+      theta[RIGHT_UPPER_LEG_ID].z += 12.0 / 18.0;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[X_COORDINATE] -= 2.2;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
+        step = 1;
+        theta[LEFT_UPPER_ARM_ID].z = 0;
+        theta[RIGHT_UPPER_ARM_ID].z = 0;
+        theta[LEFT_UPPER_ARM_ID].x = 180;
+        theta[RIGHT_UPPER_ARM_ID].x = 180;
+        initNodes(LEFT_UPPER_ARM_ID);
+        initNodes(RIGHT_UPPER_ARM_ID);
+        theta[LEFT_UPPER_LEG_ID].z = 0;
+        theta[RIGHT_UPPER_LEG_ID].z = 0;
+        initNodes(LEFT_UPPER_LEG_ID);
+        initNodes(RIGHT_UPPER_LEG_ID);
+      }
+    }
+  }
+  if (e.key === '8') {
+    if (step == 1) {
+      theta[LEFT_UPPER_ARM_ID].z += 5;
+      theta[RIGHT_UPPER_ARM_ID].z -= 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 95) {
+        step = 2;
+      }
+    }
+    if (step == 2) {
+      theta[LEFT_UPPER_ARM_ID].z -= 5;
+      theta[RIGHT_UPPER_ARM_ID].z += 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z += 9.5;
+      theta[RIGHT_LOWER_ARM_ID].z -= 9.5;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
+        step = 3;
+      }
+    }
+    if (step == 3) {
+      theta[LEFT_UPPER_ARM_ID].z += 10;
+      theta[RIGHT_UPPER_ARM_ID].z -= 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_LOWER_ARM_ID].z -= 10;
+      theta[RIGHT_LOWER_ARM_ID].z += 10;
+      initNodes(LEFT_LOWER_ARM_ID);
+      initNodes(RIGHT_LOWER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 180) {
+        step = 4;
+      }
+    }
+    if (step == 4) {
+      theta[LEFT_UPPER_ARM_ID].z -= 10;
+      theta[RIGHT_UPPER_ARM_ID].z += 10;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
+        step = 5;
+      }
+    }
+    if (step == 5) {
+      theta[LEFT_UPPER_ARM_ID].z += 5;
+      theta[RIGHT_UPPER_ARM_ID].z -= 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[RIGHT_UPPER_LEG_ID].z -= 5;
+      initNodes(RIGHT_UPPER_LEG_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 90) {
+        step = 6;
+      }
+    }
+    if (step == 6) {
+      theta[LEFT_UPPER_ARM_ID].z -= 5;
+      theta[RIGHT_UPPER_ARM_ID].z += 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[RIGHT_UPPER_LEG_ID].z += 5;
+      initNodes(RIGHT_UPPER_LEG_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
+        step = 7;
+      }
+    }
+    if (step == 7) {
+      theta[LEFT_UPPER_ARM_ID].z += 5;
+      theta[RIGHT_UPPER_ARM_ID].z -= 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_UPPER_LEG_ID].z += 5;
+      initNodes(LEFT_UPPER_LEG_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 90) {
+        step = 8;
+      }
+    }
+    if (step == 8) {
+      theta[LEFT_UPPER_ARM_ID].z -= 5;
+      theta[RIGHT_UPPER_ARM_ID].z += 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_UPPER_LEG_ID].z -= 5;
+      initNodes(LEFT_UPPER_LEG_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
+        step = 1;
+      }
+    }
+  }
+  if (e.key === '0') {
+    if (step == 1) {
+      theta[Y_COORDINATE] += 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[Y_COORDINATE] >= 100) {
+        step = 1.5;
+      }
+    }
+    if (step == 1.5) {
+      theta[Y_COORDINATE] -= 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[Y_COORDINATE] <= 0) {
+        step = 2;
+      }
+    }
+    if (step == 2) {
+      theta[Y_COORDINATE] += 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[Y_COORDINATE] >= 100) {
+        step = 2.5;
+      }
+    }
+    if (step == 2.5) {
+      theta[Y_COORDINATE] -= 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[Y_COORDINATE] <= 0) {
+        step = 3;
+      }
+    }
+    if (step == 3) {
+      theta[Y_COORDINATE] += 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[Y_COORDINATE] >= 100) {
+        step = 3.5;
+      }
+    }
+    if (step == 3.5) {
+      theta[Y_COORDINATE] -= 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[Y_COORDINATE] <= 0) {
+        step = 4;
+      }
+    }
+    if (step == 4) {
+      theta[Y_COORDINATE] += 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[Y_COORDINATE] >= 100) {
+        step = 4.5;
+      }
+    }
+    if (step == 4.5) {
+      theta[Y_COORDINATE] -= 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[Y_COORDINATE] <= 0) {
+        step = 5;
+      }
+    }
+    if (step == 5) {
+      theta[Y_COORDINATE] += 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_ARM_ID].z += 9;
+      theta[RIGHT_UPPER_ARM_ID].z -= 9;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[Y_COORDINATE] >= 100) {
+        step = 5.5;
+      }
+    }
+    if (step == 5.5) {
+      theta[Y_COORDINATE] -= 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_ARM_ID].z += 9;
+      theta[RIGHT_UPPER_ARM_ID].z -= 9;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[Y_COORDINATE] <= 0) {
+        step = 6;
+      }
+    }
+    if (step == 6) {
+      theta[Y_COORDINATE] += 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_ARM_ID].z -= 9;
+      theta[RIGHT_UPPER_ARM_ID].z += 9;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[Y_COORDINATE] >= 100) {
+        step = 6.5;
+      }
+    }
+    if (step == 6.5) {
+      theta[Y_COORDINATE] -= 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_ARM_ID].z -= 9;
+      theta[RIGHT_UPPER_ARM_ID].z += 9;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[Y_COORDINATE] <= 0) {
+        step = 7;
+      }
+    }
+    if (step == 7) {
+      theta[Y_COORDINATE] += 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_ARM_ID].z += 9;
+      theta[RIGHT_UPPER_ARM_ID].z -= 9;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[Y_COORDINATE] >= 100) {
+        step = 7.5;
+      }
+    }
+    if (step == 7.5) {
+      theta[Y_COORDINATE] -= 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_ARM_ID].z += 9;
+      theta[RIGHT_UPPER_ARM_ID].z -= 9;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[Y_COORDINATE] <= 0) {
+        step = 8;
+      }
+    }
+    if (step == 8) {
+      theta[Y_COORDINATE] += 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_ARM_ID].z -= 9;
+      theta[RIGHT_UPPER_ARM_ID].z += 9;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[Y_COORDINATE] >= 100) {
+        step = 8.5;
+      }
+    }
+    if (step == 8.5) {
+      theta[Y_COORDINATE] -= 10;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      theta[LEFT_UPPER_ARM_ID].z -= 9;
+      theta[RIGHT_UPPER_ARM_ID].z += 9;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[Y_COORDINATE] <= 0) {
+        step = 1;
+      }
+    }
+  }
+  if (e.key === '-') {
+    // console.log(step);
+    console.log(theta[LEFT_UPPER_ARM_ID].x);
+    if (step == 1) {
+      theta[LEFT_UPPER_ARM_ID].x -= 1.5;
+      theta[RIGHT_UPPER_ARM_ID].x -= 1.5;
+      theta[LEFT_UPPER_ARM_ID].z += 5;
+      theta[RIGHT_UPPER_ARM_ID].z -= 5;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[RIGHT_UPPER_LEG_ID].x -= 5;
+      theta[RIGHT_LOWER_LEG_ID].x += 5;
+      initNodes(RIGHT_UPPER_LEG_ID);
+      initNodes(RIGHT_LOWER_LEG_ID);
+      if (theta[RIGHT_UPPER_LEG_ID].x <= 85) {
+        step = 2;
+      }
+    }
+    if (step == 2) {
+      theta[LEFT_UPPER_ARM_ID].z -= 7;
+      theta[RIGHT_UPPER_ARM_ID].z += 7;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[RIGHT_UPPER_LEG_ID].x += 5;
+      theta[RIGHT_LOWER_LEG_ID].x -= 5;
+      initNodes(RIGHT_UPPER_LEG_ID);
+      initNodes(RIGHT_LOWER_LEG_ID);
+      if (theta[RIGHT_UPPER_LEG_ID].x >= 180) {
+        step = 3;
+      }
+    }
+    if (step == 3) {
+      theta[LEFT_UPPER_ARM_ID].z += 7;
+      theta[RIGHT_UPPER_ARM_ID].z -= 7;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_UPPER_LEG_ID].x -= 5;
+      theta[LEFT_LOWER_LEG_ID].x += 5;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(LEFT_LOWER_LEG_ID);
+      if (theta[LEFT_UPPER_LEG_ID].x <= 85) {
+        step = 4;
+      }
+    }
+    if (step == 4) {
+      theta[LEFT_UPPER_ARM_ID].z -= 7;
+      theta[RIGHT_UPPER_ARM_ID].z += 7;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_UPPER_LEG_ID].x += 5;
+      theta[LEFT_LOWER_LEG_ID].x -= 5;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(LEFT_LOWER_LEG_ID);
+      if (theta[LEFT_UPPER_LEG_ID].x >= 180) {
+        step = 5;
+      }
+    }
+    if (step == 5) {
+      theta[LEFT_UPPER_ARM_ID].z += 7;
+      theta[RIGHT_UPPER_ARM_ID].z -= 7;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 90) {
+        step = 6;
+      }
+    }
+    if (step == 6) {
+      theta[LEFT_UPPER_ARM_ID].z -= 7;
+      theta[RIGHT_UPPER_ARM_ID].z += 7;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_UPPER_LEG_ID].z += 1;
+      theta[RIGHT_UPPER_LEG_ID].z -= 1;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_LOWER_LEG_ID].z -= 2;
+      theta[RIGHT_LOWER_LEG_ID].z += 2;
+      initNodes(LEFT_LOWER_LEG_ID);
+      initNodes(RIGHT_LOWER_LEG_ID);
+      theta[Y_COORDINATE] -= 1;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= -36) {
+        step = 7;
+      }
+    }
+    if (step == 7) {
+      theta[LEFT_UPPER_ARM_ID].z += 7;
+      theta[RIGHT_UPPER_ARM_ID].z -= 7;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      theta[LEFT_UPPER_LEG_ID].z -= 1;
+      theta[RIGHT_UPPER_LEG_ID].z += 1;
+      initNodes(LEFT_UPPER_LEG_ID);
+      initNodes(RIGHT_UPPER_LEG_ID);
+      theta[LEFT_LOWER_LEG_ID].z += 2;
+      theta[RIGHT_LOWER_LEG_ID].z -= 2;
+      initNodes(LEFT_LOWER_LEG_ID);
+      initNodes(RIGHT_LOWER_LEG_ID);
+      theta[Y_COORDINATE] += 1;
+      gl.viewport(theta[X_COORDINATE], theta[Y_COORDINATE], canvas.width, canvas.height);
+      initNodes(TORSO_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z >= 90) {
+        step = 8;
+      }
+    }
+    if (step == 8) {
+      theta[LEFT_UPPER_ARM_ID].x += 2.03;
+      theta[RIGHT_UPPER_ARM_ID].x += 2.03;
+      theta[LEFT_UPPER_ARM_ID].z -= 7;
+      theta[RIGHT_UPPER_ARM_ID].z += 7;
+      initNodes(LEFT_UPPER_ARM_ID);
+      initNodes(RIGHT_UPPER_ARM_ID);
+      if (theta[LEFT_UPPER_ARM_ID].z <= 0) {
+        step = 1;
+      }
+    }
+  }
+};
